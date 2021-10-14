@@ -1,0 +1,16 @@
+.DS_Store
+
+# Editor directories and files
+.git
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.cache
+*.log
+tmp/*
+!tmp/.gitkeep
+infra*
+config.yaml
