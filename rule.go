@@ -13,6 +13,8 @@ type Rule interface {
 	GetName() string
 	GetType() string
 	GetIndex() string
+	SetInitialStartTime(t time.Time)
+	GetInitialStartTime() time.Time
 }
 
 type RuleBase struct {
@@ -39,6 +41,14 @@ func (r RuleBase) GetType() string {
 
 func (r RuleBase) GetIndex() string {
 	return r.Index
+}
+
+func (r RuleBase) SetInitialStartTime(t time.Time) {
+	r.InitialStartTime = t
+}
+
+func (r RuleBase) GetInitialStartTime() time.Time {
+	return r.InitialStartTime
 }
 
 type RuleCardinality struct {

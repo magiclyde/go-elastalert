@@ -24,10 +24,11 @@ type ElasticAlerter struct {
 	esClient    *elastic.Client
 	rulesLoader RulesLoader
 	rules       []Rule
+	startTime   time.Time
 }
 
 func NewElasticAlerter(cfg *Config) *ElasticAlerter {
-	e := &ElasticAlerter{cfg: cfg}
+	e := &ElasticAlerter{cfg: cfg, startTime: time.Now()}
 	e.init()
 
 	return e
@@ -126,44 +127,95 @@ func (e *ElasticAlerter) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			ok := true
 			for _, rule := range e.rules {
+				rule.SetInitialStartTime(e.startTime)
+
 				switch rule.GetType() {
 				case "cardinality":
-					rule, ok = rule.(RuleCardinality)
+					cardinality, ok := rule.(RuleCardinality)
+					if ok {
+						e.runCardinality(ctx, cardinality)
+					}
 
 				case "change":
-					rule, ok = rule.(RuleChange)
+					change, ok := rule.(RuleChange)
+					if ok {
+						e.runChange(ctx, change)
+					}
 
 				case "frequency":
-					rule, ok = rule.(RuleFrequency)
+					frequency, ok := rule.(RuleFrequency)
+					if ok {
+						e.runFrequency(ctx, frequency)
+					}
 
 				case "new_term":
-					rule, ok = rule.(RuleNewTerm)
+					newTerm, ok := rule.(RuleNewTerm)
+					if ok {
+						e.runNewTerm(ctx, newTerm)
+					}
 
 				case "percentage_match":
-					rule, ok = rule.(RulePercentageMatch)
+					percentageMatch, ok := rule.(RulePercentageMatch)
+					if ok {
+						e.runPercentageMatch(ctx, percentageMatch)
+					}
 
 				case "metric_aggregation":
-					rule, ok = rule.(RuleMetricAggregation)
+					metricAggregation, ok := rule.(RuleMetricAggregation)
+					if ok {
+						e.runMetricAggregation(ctx, metricAggregation)
+					}
 
 				case "spike_aggregation":
-					rule, ok = rule.(RuleSpikeAggregation)
+					spikeAggregation, ok := rule.(RuleSpikeAggregation)
+					if ok {
+						e.runSpikeAggregation(ctx, spikeAggregation)
+					}
 
 				case "spike":
-					rule, ok = rule.(RuleSpike)
+					spike, ok := rule.(RuleSpike)
+					if ok {
+						e.runSpike(ctx, spike)
+					}
 				}
 
-				if !ok {
-					log.Printf("invalid rule: %+v", rule)
-					continue
-				}
-				log.Printf("rule.name: %s", rule.GetName())
-				// todo...
 			}
 
 		case <-ctx.Done():
 			log.Fatalf("run cancelled")
 		}
 	}
+}
+
+func (e *ElasticAlerter) runCardinality(ctx context.Context, rl RuleCardinality) {
+	log.Println("runCardinality...")
+}
+
+func (e *ElasticAlerter) runChange(ctx context.Context, rl RuleChange) {
+
+}
+
+func (e *ElasticAlerter) runFrequency(ctx context.Context, rl RuleFrequency) {
+
+}
+
+func (e *ElasticAlerter) runNewTerm(ctx context.Context, rl RuleNewTerm) {
+
+}
+
+func (e *ElasticAlerter) runPercentageMatch(ctx context.Context, rl RulePercentageMatch) {
+
+}
+
+func (e *ElasticAlerter) runMetricAggregation(ctx context.Context, rl RuleMetricAggregation) {
+
+}
+
+func (e *ElasticAlerter) runSpikeAggregation(ctx context.Context, rl RuleSpikeAggregation) {
+
+}
+
+func (e *ElasticAlerter) runSpike(ctx context.Context, rl RuleSpike) {
+
 }
