@@ -31,7 +31,7 @@ func main() {
 
 	cfg := NewConfig()
 	alerter := NewElasticAlerter(cfg)
-	go alerter.Run(ctx)
+	alerter.Run(ctx)
 
 	for {
 		select {
