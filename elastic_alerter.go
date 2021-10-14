@@ -109,10 +109,11 @@ func (e *ElasticAlerter) initRules() {
 }
 
 func (e *ElasticAlerter) Run(ctx context.Context) {
-	duration, err := str2duration.ParseDuration(e.cfg.RunEvery)
+	duration, err := str2duration.ParseDuration(string(e.cfg.RunEvery))
 	if err != nil {
-		log.Fatalf("str2duration.ParseDuration err: %s, run_every: %s", err.Error(), e.cfg.RunEvery)
+		log.Fatalf("str2duration.ParseDuration err: %s", err.Error())
 	}
+	log.Printf("run every %+v", duration)
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
 
@@ -120,8 +121,40 @@ func (e *ElasticAlerter) Run(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			log.Println("tick...")
+			ok := true
 			for _, rule := range e.rules {
-				log.Printf("apply rule, name: %s, type: %s, index: %s", rule.Name, rule.Typ, rule.Index)
+				//log.Printf("apply rule, name: %s, type: %s, index: %s", rule.GetName(), rule.GetType(), rule.GetIndex())
+				switch rule.GetType() {
+				case "cardinality":
+					rule, ok = rule.(RuleCardinality)
+
+				case "change":
+					rule, ok = rule.(RuleChange)
+
+				case "frequency":
+					rule, ok = rule.(RuleFrequency)
+
+				case "new_term":
+					rule, ok = rule.(RuleNewTerm)
+
+				case "percentage_match":
+					rule, ok = rule.(RulePercentageMatch)
+
+				case "metric_aggregation":
+					rule, ok = rule.(RuleMetricAggregation)
+
+				case "spike_aggregation":
+					rule, ok = rule.(RuleSpikeAggregation)
+
+				case "spike":
+					rule, ok = rule.(RuleSpike)
+				}
+
+				if !ok {
+					log.Printf("invalid rule: %+v", rule)
+					continue
+				}
+				log.Printf("rule: %+v", rule)
 				// todo...
 			}
 

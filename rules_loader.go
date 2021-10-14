@@ -74,12 +74,72 @@ func (l *FileRulesLoader) Load() error {
 			log.Printf("viper.ReadConfig err: %s", err.Error())
 			continue
 		}
-		var rule Rule
-		if err := viper.Unmarshal(&rule); err != nil {
-			log.Printf("viper.Unmarshal err: %s", err.Error())
-			continue
+
+		switch viper.Get("type") {
+		case "cardinality":
+			var rule RuleCardinality
+			if err := viper.Unmarshal(&rule); err != nil {
+				log.Printf("viper.Unmarshal err: %s", err.Error())
+				continue
+			}
+			l.rules = append(l.rules, rule)
+
+		case "change":
+			var rule RuleChange
+			if err := viper.Unmarshal(&rule); err != nil {
+				log.Printf("viper.Unmarshal err: %s", err.Error())
+				continue
+			}
+			l.rules = append(l.rules, rule)
+
+		case "frequency":
+			var rule RuleFrequency
+			if err := viper.Unmarshal(&rule); err != nil {
+				log.Printf("viper.Unmarshal err: %s", err.Error())
+				continue
+			}
+			l.rules = append(l.rules, rule)
+
+		case "new_term":
+			var rule RuleNewTerm
+			if err := viper.Unmarshal(&rule); err != nil {
+				log.Printf("viper.Unmarshal err: %s", err.Error())
+				continue
+			}
+			l.rules = append(l.rules, rule)
+
+		case "percentage_match":
+			var rule RulePercentageMatch
+			if err := viper.Unmarshal(&rule); err != nil {
+				log.Printf("viper.Unmarshal err: %s", err.Error())
+				continue
+			}
+			l.rules = append(l.rules, rule)
+
+		case "metric_aggregation":
+			var rule RuleMetricAggregation
+			if err := viper.Unmarshal(&rule); err != nil {
+				log.Printf("viper.Unmarshal err: %s", err.Error())
+				continue
+			}
+			l.rules = append(l.rules, rule)
+
+		case "spike_aggregation":
+			var rule RuleSpikeAggregation
+			if err := viper.Unmarshal(&rule); err != nil {
+				log.Printf("viper.Unmarshal err: %s", err.Error())
+				continue
+			}
+			l.rules = append(l.rules, rule)
+
+		case "spike":
+			var rule RuleSpike
+			if err := viper.Unmarshal(&rule); err != nil {
+				log.Printf("viper.Unmarshal err: %s", err.Error())
+				continue
+			}
+			l.rules = append(l.rules, rule)
 		}
-		l.rules = append(l.rules, rule)
 	}
 
 	return nil

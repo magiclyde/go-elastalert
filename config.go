@@ -13,6 +13,8 @@ import (
 	"log"
 )
 
+type DurationStr string // eg "30s" "1h"
+
 type Config struct {
 	// EsUrl base URL of form http://ipaddr:port with no trailing slash
 	EsUrl string `mapstructure:"es_url"`
@@ -52,10 +54,10 @@ type Config struct {
 
 	// BufferTime ElastAlert will continuously query against a window from the present to buffer_time ago.
 	// This option is ignored for rules where use_count_query or use_terms_query is set to true. eg "1d2h3m4s"
-	BufferTime string `mapstructure:"buffer_time"`
+	BufferTime DurationStr `mapstructure:"buffer_time"`
 
 	// RunEvery How often ElastAlert should query Elasticsearch
-	RunEvery string `mapstructure:"run_every"`
+	RunEvery DurationStr `mapstructure:"run_every"`
 
 	// WritebackIndex The index on es_host to use, eg elastalert_status
 	WritebackIndex string `mapstructure:"writeback_index"`
@@ -74,14 +76,17 @@ type Config struct {
 	// ScrollKeepalive The maximum time (formatted in Time Units) the scrolling context should be kept alive.
 	// Avoid using high values as it abuses resources in Elasticsearch, but be mindful to allow sufficient time
 	// to finish processing all the results. eg 30s
-	ScrollKeepalive string `mapstructure:"scroll_keepalive"`
+	ScrollKeepalive DurationStr `mapstructure:"scroll_keepalive"`
 
 	// MaxAggregation The maximum number of alerts to aggregate together. The default is 10000
 	// If a rule has aggregation set, all alerts occuring within a timeframe will be sent together.
 	MaxAggregation int `mapstructure:"max_aggregation"`
 
 	// OldQueryLimit The maximum time between queries for ElastAlert to start at the most recently run query. The default is one week.
-	OldQueryLimit string `mapstructure:"old_query_limit"`
+	OldQueryLimit DurationStr `mapstructure:"old_query_limit"`
+
+	// AlertTimeLimit the retry window for failed alerts.
+	AlertTimeLimit DurationStr `mapstructure:"alert_time_limit"`
 
 	// DisableRulesOnError  This defaults to True
 	DisableRulesOnError bool `mapstructure:"disable_rules_on_error"`
