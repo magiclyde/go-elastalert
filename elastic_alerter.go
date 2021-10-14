@@ -120,10 +120,8 @@ func (e *ElasticAlerter) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			log.Println("tick...")
 			ok := true
 			for _, rule := range e.rules {
-				//log.Printf("apply rule, name: %s, type: %s, index: %s", rule.GetName(), rule.GetType(), rule.GetIndex())
 				switch rule.GetType() {
 				case "cardinality":
 					rule, ok = rule.(RuleCardinality)
@@ -154,7 +152,7 @@ func (e *ElasticAlerter) Run(ctx context.Context) {
 					log.Printf("invalid rule: %+v", rule)
 					continue
 				}
-				log.Printf("rule: %+v", rule)
+				log.Printf("rule.name: %s", rule.GetName())
 				// todo...
 			}
 
