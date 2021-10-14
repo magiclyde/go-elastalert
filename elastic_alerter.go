@@ -91,6 +91,11 @@ func (e *ElasticAlerter) initEsClient() {
 	if err != nil {
 		log.Fatalf("elastic.NewClient err: %s", err.Error())
 	}
+	ret, _, err := client.Ping(e.cfg.EsUrl).Do(context.Background())
+	if err != nil {
+		log.Fatalf("client.Ping err: %s", err.Error())
+	}
+	log.Println(ret.TagLine)
 	e.esClient = client
 }
 
@@ -106,6 +111,7 @@ func (e *ElasticAlerter) initRules() {
 		log.Fatalf("e.rulesLoader.Load() err: %s", err.Error())
 	}
 	e.rules = e.rulesLoader.GetRules()
+	log.Printf("%d rules loaded", len(e.rules))
 }
 
 func (e *ElasticAlerter) Run(ctx context.Context) {
