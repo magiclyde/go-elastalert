@@ -62,12 +62,19 @@ func (l *FileRulesLoader) GetRules() []Rule {
 
 	rules := make([]Rule, len(files))
 
+	maxGoroutines := 16
+	guard := make(chan struct{}, maxGoroutines)
+
 	wg := sync.WaitGroup{}
 	wg.Add(len(files))
 
 	for i, file := range files {
+		guard <- struct{}{} // would block if guard channel is already filled
 		go func(i int, file string) {
-			defer wg.Done()
+			defer func() {
+				wg.Done()
+				<-guard
+			}()
 
 			runtimeViper := viper.New()
 			runtimeViper.SetConfigFile(file)
