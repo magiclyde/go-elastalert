@@ -29,7 +29,5 @@ func main() {
 		cancel()
 	}()
 
-	cfg := NewConfig()
-	alerter := NewElasticAlerter(cfg)
-	alerter.Run(ctx)
+	NewElasticAlerter(NewConfig()).Run(ctx)
 }
