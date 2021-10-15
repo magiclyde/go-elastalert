@@ -104,7 +104,7 @@ func (e *ElasticAlerter) initRules() {
 		log.Fatalf("rules loader: %s not supported", e.cfg.RulesLoader)
 	}
 
-	e.rules = e.rulesLoader.GetRules()
+	e.rules = e.rulesLoader.Load()
 	log.Printf("%d rules loaded", len(e.rules))
 }
 

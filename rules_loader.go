@@ -14,7 +14,7 @@ import (
 )
 
 type RulesLoader interface {
-	GetRules() []Rule
+	Load() []Rule
 }
 
 type FileRulesLoaderOption func(*FileRulesLoader)
@@ -53,7 +53,7 @@ func SetDescend(d bool) FileRulesLoaderOption {
 	}
 }
 
-func (l *FileRulesLoader) GetRules() []Rule {
+func (l *FileRulesLoader) Load() []Rule {
 	files, err := WalkDir(l.Path, l.Suffix, l.Descend)
 	if err != nil {
 		log.Printf("WalkDir err: %s", err.Error())
