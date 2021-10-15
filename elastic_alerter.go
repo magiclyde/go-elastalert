@@ -88,15 +88,11 @@ func (e *ElasticAlerter) initEsClient() {
 	if e.cfg.EsUsername != "" || e.cfg.EsPassword != "" {
 		opts = append(opts, elastic.SetBasicAuth(e.cfg.EsUsername, e.cfg.EsPassword))
 	}
+
 	client, err := elastic.NewClient(opts...)
 	if err != nil {
 		log.Fatalf("elastic.NewClient err: %s", err.Error())
 	}
-	ret, _, err := client.Ping(e.cfg.EsUrl).Do(context.Background())
-	if err != nil {
-		log.Fatalf("client.Ping err: %s", err.Error())
-	}
-	log.Println(ret.TagLine)
 	e.esClient = client
 }
 
@@ -108,9 +104,6 @@ func (e *ElasticAlerter) initRules() {
 		log.Fatalf("rules loader: %s not supported", e.cfg.RulesLoader)
 	}
 
-	if err := e.rulesLoader.Load(); err != nil {
-		log.Fatalf("e.rulesLoader.Load() err: %s", err.Error())
-	}
 	e.rules = e.rulesLoader.GetRules()
 	log.Printf("%d rules loaded", len(e.rules))
 }
@@ -194,29 +187,29 @@ func (e *ElasticAlerter) runCardinality(ctx context.Context, rl RuleCardinality)
 }
 
 func (e *ElasticAlerter) runChange(ctx context.Context, rl RuleChange) {
-
+	log.Println("runChange...")
 }
 
 func (e *ElasticAlerter) runFrequency(ctx context.Context, rl RuleFrequency) {
-
+	log.Println("runFrequency...")
 }
 
 func (e *ElasticAlerter) runNewTerm(ctx context.Context, rl RuleNewTerm) {
-
+	log.Println("runNewTerm...")
 }
 
 func (e *ElasticAlerter) runPercentageMatch(ctx context.Context, rl RulePercentageMatch) {
-
+	log.Println("runPercentageMatch...")
 }
 
 func (e *ElasticAlerter) runMetricAggregation(ctx context.Context, rl RuleMetricAggregation) {
-
+	log.Println("runMetricAggregation...")
 }
 
 func (e *ElasticAlerter) runSpikeAggregation(ctx context.Context, rl RuleSpikeAggregation) {
-
+	log.Println("runSpikeAggregation...")
 }
 
 func (e *ElasticAlerter) runSpike(ctx context.Context, rl RuleSpike) {
-
+	log.Println("runSpike...")
 }
