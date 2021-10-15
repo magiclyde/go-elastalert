@@ -124,6 +124,7 @@ func (e *ElasticAlerter) Run(ctx context.Context) {
 			log.Fatalf("run cancelled")
 
 		case <-ticker.C:
+			log.Println("\ntick...")
 			for _, rule := range e.rules {
 				rule.SetInitialStartTime(e.startTime)
 
@@ -183,33 +184,33 @@ func (e *ElasticAlerter) Run(ctx context.Context) {
 }
 
 func (e *ElasticAlerter) runCardinality(ctx context.Context, rl RuleCardinality) {
-	log.Println("runCardinality...")
+	log.Println("runCardinality")
 }
 
 func (e *ElasticAlerter) runChange(ctx context.Context, rl RuleChange) {
-	log.Println("runChange...")
+	log.Println("runChange")
 }
 
 func (e *ElasticAlerter) runFrequency(ctx context.Context, rl RuleFrequency) {
-	log.Println("runFrequency...")
+	log.Println("runFrequency")
 }
 
 func (e *ElasticAlerter) runNewTerm(ctx context.Context, rl RuleNewTerm) {
-	log.Println("runNewTerm...")
+	log.Println("runNewTerm")
 }
 
 func (e *ElasticAlerter) runPercentageMatch(ctx context.Context, rl RulePercentageMatch) {
-	log.Println("runPercentageMatch...")
+	log.Println("runPercentageMatch")
 }
 
 func (e *ElasticAlerter) runMetricAggregation(ctx context.Context, rl RuleMetricAggregation) {
-	log.Println("runMetricAggregation...")
+	log.Println("runMetricAggregation")
 }
 
 func (e *ElasticAlerter) runSpikeAggregation(ctx context.Context, rl RuleSpikeAggregation) {
-	log.Println("runSpikeAggregation...")
+	log.Println("runSpikeAggregation")
 }
 
 func (e *ElasticAlerter) runSpike(ctx context.Context, rl RuleSpike) {
-	log.Println("runSpike...")
+	log.Println("runSpike")
 }

@@ -10,6 +10,7 @@ package elastalert
 import (
 	"github.com/spf13/viper"
 	"log"
+	"reflect"
 	"sync"
 )
 
@@ -23,6 +24,7 @@ type FileRulesLoader struct {
 	Path    string
 	Suffix  string
 	Descend bool
+	ruleMap map[string]Rule
 }
 
 func NewFileRulesLoader(path string, options ...FileRulesLoaderOption) *FileRulesLoader {
@@ -30,10 +32,22 @@ func NewFileRulesLoader(path string, options ...FileRulesLoaderOption) *FileRule
 		Path:    path,
 		Suffix:  "yaml",
 		Descend: true,
+		ruleMap: make(map[string]Rule),
 	}
 
 	for _, f := range options {
 		f(l)
+	}
+
+	l.ruleMap = map[string]Rule{
+		"cardinality":        RuleCardinality{},
+		"change":             RuleChange{},
+		"frequency":          RuleFrequency{},
+		"new_term":           RuleNewTerm{},
+		"percentage_match":   RulePercentageMatch{},
+		"metric_aggregation": RuleMetricAggregation{},
+		"spike_aggregation":  RuleSpikeAggregation{},
+		"spike":              RuleSpike{},
 	}
 
 	return l
@@ -78,77 +92,18 @@ func (l *FileRulesLoader) Load() []Rule {
 
 			runtimeViper := viper.New()
 			runtimeViper.SetConfigFile(file)
-
 			if err := runtimeViper.ReadInConfig(); err != nil {
 				log.Printf("ReadInConfig err: %s from file: %s", err.Error(), file)
 				return
 			}
 
-			switch runtimeViper.Get("type") {
-			case "cardinality":
-				var rule RuleCardinality
-				if err := runtimeViper.Unmarshal(&rule); err != nil {
-					log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
-					return
-				}
-				rules[i] = rule
-
-			case "change":
-				var rule RuleChange
-				if err := runtimeViper.Unmarshal(&rule); err != nil {
-					log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
-					return
-				}
-				rules[i] = rule
-
-			case "frequency":
-				var rule RuleFrequency
-				if err := runtimeViper.Unmarshal(&rule); err != nil {
-					log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
-					return
-				}
-				rules[i] = rule
-
-			case "new_term":
-				var rule RuleNewTerm
-				if err := runtimeViper.Unmarshal(&rule); err != nil {
-					log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
-					return
-				}
-				rules[i] = rule
-
-			case "percentage_match":
-				var rule RulePercentageMatch
-				if err := runtimeViper.Unmarshal(&rule); err != nil {
-					log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
-					return
-				}
-				rules[i] = rule
-
-			case "metric_aggregation":
-				var rule RuleMetricAggregation
-				if err := runtimeViper.Unmarshal(&rule); err != nil {
-					log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
-					return
-				}
-				rules[i] = rule
-
-			case "spike_aggregation":
-				var rule RuleSpikeAggregation
-				if err := runtimeViper.Unmarshal(&rule); err != nil {
-					log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
-					return
-				}
-				rules[i] = rule
-
-			case "spike":
-				var rule RuleSpike
-				if err := runtimeViper.Unmarshal(&rule); err != nil {
-					log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
-					return
-				}
-				rules[i] = rule
+			ruleObj := l.ruleMap[runtimeViper.GetString("type")]
+			val := reflect.New(reflect.TypeOf(ruleObj))
+			if err := runtimeViper.Unmarshal(val.Interface()); err != nil {
+				log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
+				return
 			}
+			rules[i] = val.Elem().Interface().(Rule)
 
 		}(i, file)
 	}
