@@ -121,11 +121,15 @@ func (e *ElasticAlerter) Run(ctx context.Context) {
 		log.Fatalf("str2duration.ParseDuration err: %s", err.Error())
 	}
 	log.Printf("run every %+v", duration)
+
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
 
 	for {
 		select {
+		case <-ctx.Done():
+			log.Fatalf("run cancelled")
+
 		case <-ticker.C:
 			for _, rule := range e.rules {
 				rule.SetInitialStartTime(e.startTime)
@@ -181,9 +185,6 @@ func (e *ElasticAlerter) Run(ctx context.Context) {
 				}
 
 			}
-
-		case <-ctx.Done():
-			log.Fatalf("run cancelled")
 		}
 	}
 }

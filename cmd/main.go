@@ -32,11 +32,4 @@ func main() {
 	cfg := NewConfig()
 	alerter := NewElasticAlerter(cfg)
 	alerter.Run(ctx)
-
-	for {
-		select {
-		case <-ctx.Done():
-			log.Fatalf("cancelled")
-		}
-	}
 }
