@@ -97,7 +97,12 @@ func (l *FileRulesLoader) Load() []Rule {
 				return
 			}
 
-			ruleObj := l.ruleMap[runtimeViper.GetString("type")]
+			typ := runtimeViper.GetString("type")
+			ruleObj, ok := l.ruleMap[typ]
+			if !ok {
+				log.Printf("unsupported type: %s", typ)
+				return
+			}
 			val := reflect.New(reflect.TypeOf(ruleObj))
 			if err := runtimeViper.Unmarshal(val.Interface()); err != nil {
 				log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
