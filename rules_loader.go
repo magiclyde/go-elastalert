@@ -21,25 +21,25 @@ type RulesLoader interface {
 type FileRulesLoaderOption func(*FileRulesLoader)
 
 type FileRulesLoader struct {
-	Path    string
-	Suffix  string
-	Descend bool
-	ruleMap map[string]Rule
+	Path        string
+	Suffix      string
+	Descend     bool
+	ruleTypeMap map[string]Rule
 }
 
 func NewFileRulesLoader(path string, options ...FileRulesLoaderOption) *FileRulesLoader {
 	l := &FileRulesLoader{
-		Path:    path,
-		Suffix:  "yaml",
-		Descend: true,
-		ruleMap: make(map[string]Rule),
+		Path:        path,
+		Suffix:      "yaml",
+		Descend:     true,
+		ruleTypeMap: make(map[string]Rule),
 	}
 
 	for _, f := range options {
 		f(l)
 	}
 
-	l.ruleMap = map[string]Rule{
+	l.ruleTypeMap = map[string]Rule{
 		"cardinality":        RuleCardinality{},
 		"change":             RuleChange{},
 		"frequency":          RuleFrequency{},
@@ -98,7 +98,7 @@ func (l *FileRulesLoader) Load() []Rule {
 			}
 
 			typ := runtimeViper.GetString("type")
-			ruleObj, ok := l.ruleMap[typ]
+			ruleObj, ok := l.ruleTypeMap[typ]
 			if !ok {
 				log.Printf("unsupported type: %s", typ)
 				return
