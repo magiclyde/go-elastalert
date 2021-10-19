@@ -24,6 +24,7 @@ type FileRulesLoader struct {
 	Path        string
 	Suffix      string
 	Descend     bool
+	MaxG        int
 	ruleTypeMap map[string]Rule
 }
 
@@ -32,6 +33,7 @@ func NewFileRulesLoader(path string, options ...FileRulesLoaderOption) *FileRule
 		Path:        path,
 		Suffix:      "yaml",
 		Descend:     true,
+		MaxG:        1e3,
 		ruleTypeMap: make(map[string]Rule),
 	}
 
@@ -53,7 +55,7 @@ func NewFileRulesLoader(path string, options ...FileRulesLoaderOption) *FileRule
 	return l
 }
 
-// SetSuffix sets the suffix used by the FileRulesLoader.
+// SetSuffix set the suffix used by the FileRulesLoader.
 func SetSuffix(s string) FileRulesLoaderOption {
 	return func(l *FileRulesLoader) {
 		l.Suffix = s
@@ -67,6 +69,13 @@ func SetDescend(d bool) FileRulesLoaderOption {
 	}
 }
 
+// SetMaxG set max goroutines
+func SetMaxG(max int) FileRulesLoaderOption {
+	return func(l *FileRulesLoader) {
+		l.MaxG = max
+	}
+}
+
 func (l *FileRulesLoader) Load() []Rule {
 	files, err := WalkDir(l.Path, l.Suffix, l.Descend)
 	if err != nil {
@@ -76,8 +85,7 @@ func (l *FileRulesLoader) Load() []Rule {
 
 	rules := make([]Rule, len(files))
 
-	maxGoroutines := 16
-	guard := make(chan struct{}, maxGoroutines)
+	guard := make(chan struct{}, l.MaxG)
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(files))
