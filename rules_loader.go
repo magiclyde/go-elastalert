@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"reflect"
-	"sync"
 )
 
 type RulesLoader interface {
@@ -24,8 +23,9 @@ type FileRulesLoader struct {
 	Path        string
 	Suffix      string
 	Descend     bool
-	MaxG        int
 	ruleTypeMap map[string]Rule
+	rules       []Rule
+	loaded      bool
 }
 
 func NewFileRulesLoader(path string, options ...FileRulesLoaderOption) *FileRulesLoader {
@@ -33,7 +33,6 @@ func NewFileRulesLoader(path string, options ...FileRulesLoaderOption) *FileRule
 		Path:        path,
 		Suffix:      "yaml",
 		Descend:     true,
-		MaxG:        1e3,
 		ruleTypeMap: make(map[string]Rule),
 	}
 
@@ -69,72 +68,45 @@ func SetDescend(d bool) FileRulesLoaderOption {
 	}
 }
 
-// SetMaxG set max goroutines
-func SetMaxG(max int) FileRulesLoaderOption {
-	return func(l *FileRulesLoader) {
-		l.MaxG = max
+func (l *FileRulesLoader) Load() []Rule {
+	if l.loaded {
+		return l.rules
 	}
+
+	files := WalkDir(l.Path, l.Suffix, l.Descend)
+	rules := l.readInConfig(files)
+	for rule := range rules {
+		l.rules = append(l.rules, rule)
+	}
+	l.loaded = true
+
+	return l.rules
 }
 
-func (l *FileRulesLoader) Load() []Rule {
-	files, err := WalkDir(l.Path, l.Suffix, l.Descend)
-	if err != nil {
-		log.Printf("WalkDir err: %s", err.Error())
-		return nil
-	}
-
-	rules := make([]Rule, len(files))
-
-	guard := make(chan struct{}, l.MaxG)
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(files))
-
-	for i, file := range files {
-		guard <- struct{}{} // would block if guard channel is already filled
-		go func(i int, file string) {
-			defer func() {
-				wg.Done()
-				<-guard
-			}()
-
+func (l *FileRulesLoader) readInConfig(in <-chan string) <-chan Rule {
+	out := make(chan Rule, cap(in))
+	go func() {
+		for path := range in {
 			runtimeViper := viper.New()
-			runtimeViper.SetConfigFile(file)
+			runtimeViper.SetConfigFile(path)
 			if err := runtimeViper.ReadInConfig(); err != nil {
-				log.Printf("ReadInConfig err: %s from file: %s", err.Error(), file)
-				return
+				log.Printf("ReadInConfig err: %s from : %s", err.Error(), path)
+				continue
 			}
-
 			typ := runtimeViper.GetString("type")
 			ruleObj, ok := l.ruleTypeMap[typ]
 			if !ok {
 				log.Printf("unsupported type: %s", typ)
-				return
+				continue
 			}
 			val := reflect.New(reflect.TypeOf(ruleObj))
 			if err := runtimeViper.Unmarshal(val.Interface()); err != nil {
-				log.Printf("Unmarshal err: %s from file: %s", err.Error(), file)
-				return
+				log.Printf("Unmarshal err: %s from file: %s", err.Error(), path)
+				continue
 			}
-			rules[i] = val.Elem().Interface().(Rule)
-
-		}(i, file)
-	}
-
-	wg.Wait()
-
-	// rm nil value from slice without allocating a new slice
-	for i := 0; i < len(rules); {
-		if rules[i] != nil {
-			i++
-			continue
+			out <- val.Elem().Interface().(Rule)
 		}
-		if i < len(rules)-1 {
-			copy(rules[i:], rules[i+1:])
-		}
-		rules[len(rules)-1] = nil
-		rules = rules[:len(rules)-1]
-	}
-
-	return rules
+		close(out)
+	}()
+	return out
 }

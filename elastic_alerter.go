@@ -23,12 +23,16 @@ type ElasticAlerter struct {
 	cfg         *Config
 	esClient    *elastic.Client
 	rulesLoader RulesLoader
-	rules       []Rule
 	startTime   time.Time
+	endTime     time.Time
 }
 
 func NewElasticAlerter(cfg *Config) *ElasticAlerter {
-	e := &ElasticAlerter{cfg: cfg, startTime: time.Now()}
+	e := &ElasticAlerter{
+		cfg:       cfg,
+		startTime: time.Now(),
+		endTime:   time.Now(),
+	}
 	e.init()
 
 	return e
@@ -36,7 +40,7 @@ func NewElasticAlerter(cfg *Config) *ElasticAlerter {
 
 func (e *ElasticAlerter) init() {
 	e.initEsClient()
-	e.initRules()
+	e.initRulesLoader()
 }
 
 func (e *ElasticAlerter) getHttpClient() *http.Client {
@@ -96,7 +100,7 @@ func (e *ElasticAlerter) initEsClient() {
 	e.esClient = client
 }
 
-func (e *ElasticAlerter) initRules() {
+func (e *ElasticAlerter) initRulesLoader() {
 	switch e.cfg.RulesLoader {
 	case "FileRulesLoader":
 		e.rulesLoader = NewFileRulesLoader(e.cfg.RulesFolder, SetDescend(e.cfg.ScanSubdirectories))
@@ -104,8 +108,7 @@ func (e *ElasticAlerter) initRules() {
 		log.Fatalf("rules loader: %s not supported", e.cfg.RulesLoader)
 	}
 
-	e.rules = e.rulesLoader.Load()
-	log.Printf("%d rules loaded", len(e.rules))
+	log.Printf("%d rules loaded", len(e.rulesLoader.Load()))
 }
 
 func (e *ElasticAlerter) Run(ctx context.Context) {
@@ -124,8 +127,8 @@ func (e *ElasticAlerter) Run(ctx context.Context) {
 			log.Fatalf("run cancelled")
 
 		case <-ticker.C:
-			log.Println("\ntick...")
-			for _, rule := range e.rules {
+			log.Println("tick...")
+			for _, rule := range e.rulesLoader.Load() {
 				rule.SetInitialStartTime(e.startTime)
 
 				switch rule.GetType() {

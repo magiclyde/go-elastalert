@@ -8,43 +8,38 @@
 package elastalert
 
 import (
-	"io/ioutil"
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// WalkDir
-func WalkDir(dirPth, suffix string, descend bool) (files []string, err error) {
-	suffix = strings.ToLower(suffix)
+func Concat(values ...string) string {
+	var buffer bytes.Buffer
+	for _, s := range values {
+		buffer.WriteString(s)
+	}
+	return buffer.String()
+}
 
-	if descend {
-		err = filepath.Walk(dirPth, func(filename string, fi os.FileInfo, err error) error {
-			if err != nil {
-				return err
+func WalkDir(dir, suffix string, descend bool) <-chan string {
+	ext := Concat(".", strings.ToLower(suffix))
+	out := make(chan string)
+	go func() {
+		filepath.Walk(dir, func(path string, fi os.FileInfo, _ error) (err error) {
+			if fi.IsDir() && path != dir {
+				if descend {
+					return nil
+				}
+				return filepath.SkipDir
 			}
-			if fi.IsDir() {
-				return nil
+			//filter file by extension
+			if strings.ToLower(filepath.Ext(path)) == ext {
+				out <- path
 			}
-			if strings.HasSuffix(strings.ToLower(fi.Name()), suffix) {
-				files = append(files, filename)
-			}
-			return nil
+			return
 		})
-		return
-	}
-
-	fis, err := ioutil.ReadDir(dirPth)
-	if err != nil {
-		return nil, err
-	}
-	for _, fi := range fis {
-		if fi.IsDir() {
-			continue
-		}
-		if strings.HasSuffix(strings.ToLower(fi.Name()), suffix) {
-			files = append(files, filepath.Join(dirPth, fi.Name()))
-		}
-	}
-	return
+		defer close(out)
+	}()
+	return out
 }
