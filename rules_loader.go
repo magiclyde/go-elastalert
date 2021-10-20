@@ -74,7 +74,7 @@ func (l *FileRulesLoader) Load() []Rule {
 	}
 
 	files := WalkDir(l.Path, l.Suffix, l.Descend)
-	rules := l.readInConfig(files)
+	rules := l.loadRule(files)
 	for rule := range rules {
 		l.rules = append(l.rules, rule)
 	}
@@ -83,7 +83,7 @@ func (l *FileRulesLoader) Load() []Rule {
 	return l.rules
 }
 
-func (l *FileRulesLoader) readInConfig(in <-chan string) <-chan Rule {
+func (l *FileRulesLoader) loadRule(in <-chan string) <-chan Rule {
 	out := make(chan Rule, cap(in))
 	go func() {
 		for path := range in {

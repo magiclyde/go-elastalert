@@ -29,7 +29,7 @@ func WalkDir(dir, suffix string, descend bool) <-chan string {
 		filepath.Walk(dir, func(path string, fi os.FileInfo, _ error) (err error) {
 			if fi.IsDir() && path != dir {
 				if descend {
-					return nil
+					return
 				}
 				return filepath.SkipDir
 			}
