@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 func Concat(values ...string) string {
@@ -42,4 +43,36 @@ func WalkDir(dir, suffix string, descend bool) <-chan string {
 		defer close(out)
 	}()
 	return out
+}
+
+func ParallelWalkDir(dir, suffix string, descend bool) <-chan string {
+	out := make(chan string)
+	go func() {
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		parallelWalkDir(dir, suffix, descend, wg, out)
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
+
+func parallelWalkDir(dir, suffix string, descend bool, wg *sync.WaitGroup, out chan string) {
+	defer wg.Done()
+	ext := Concat(".", strings.ToLower(suffix))
+	visit := func(path string, fi os.FileInfo, err error) error {
+		if fi.IsDir() && path != dir {
+			if descend {
+				wg.Add(1)
+				go parallelWalkDir(path, suffix, descend, wg, out)
+			}
+			return filepath.SkipDir
+		}
+		//filter file by extension
+		if strings.ToLower(filepath.Ext(path)) == ext {
+			out <- path
+		}
+		return nil
+	}
+	filepath.Walk(dir, visit)
 }
