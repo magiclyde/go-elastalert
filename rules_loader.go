@@ -75,9 +75,17 @@ func (l *FileRulesLoader) Load() []Rule {
 
 	files := WalkDir(l.Path, l.Suffix, l.Descend)
 	rules := l.loadRule(files)
+
+	// allocated earlier by fixed size
+	l.rules = make([]Rule, len(files))
+
 	for rule := range rules {
 		l.rules = append(l.rules, rule)
 	}
+
+	// rm nil value from slice without allocating a new slice
+	l.cut()
+
 	l.loaded = true
 
 	return l.rules
@@ -109,4 +117,18 @@ func (l *FileRulesLoader) loadRule(in <-chan string) <-chan Rule {
 		close(out)
 	}()
 	return out
+}
+
+func (l *FileRulesLoader) cut() {
+	for i := 0; i < len(l.rules); {
+		if l.rules[i] != nil {
+			i++
+			continue
+		}
+		if i < len(l.rules)-1 {
+			copy(l.rules[i:], l.rules[i+1:])
+		}
+		l.rules[len(l.rules)-1] = nil
+		l.rules = l.rules[:len(l.rules)-1]
+	}
 }
